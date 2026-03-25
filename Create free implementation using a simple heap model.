@@ -1,0 +1,74 @@
+
+#include <stdio.h>
+#include <stddef.h>
+
+#define HEAP_SIZE 1024
+
+// Simulated heap memory
+char heap[HEAP_SIZE];
+
+// Block structure
+typedef struct block {
+    size_t size;
+    int free;
+    struct block *next;
+} block;
+
+block *freeList = (void*)heap;
+
+void init_heap() {
+    freeList->size = HEAP_SIZE - sizeof(block);
+    freeList->free = 1;
+    freeList->next = NULL;
+}
+
+void *my_malloc(size_t size) {
+    block *curr = freeList;
+
+    while (curr != NULL) {
+        if (curr->free && curr->size >= size) {
+            curr->free = 0;
+            return (void*)(curr + 1); // memory after block header
+        }
+        curr = curr->next;
+    }
+    return NULL;
+}
+
+void my_free(void *ptr) {
+    if (ptr == NULL)
+        return;
+
+    block *curr = (block*)ptr - 1;
+    curr->free = 1;
+}
+
+void print_heap() {
+    block *curr = freeList;
+    printf("\nHeap Blocks:\n");
+
+    while (curr != NULL) {
+        printf("Size: %zu | Free: %d\n", curr->size, curr->free);
+        curr = curr->next;
+    }
+}
+
+int main() {
+
+    init_heap();
+
+    printf("Allocating 100 bytes\n");
+    void *p1 = my_malloc(100);
+
+    printf("Allocating 200 bytes\n");
+    void *p2 = my_malloc(200);
+
+    print_heap();
+
+    printf("\nFreeing first block\n");
+    my_free(p1);
+
+    print_heap();
+
+    return 0;
+}
